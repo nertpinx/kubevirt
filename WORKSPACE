@@ -6915,6 +6915,30 @@ rpm(
 )
 
 rpm(
+    name = "virt-lint-0__0.0.1-1.el9.x86_64",
+    sha256 = "169f2759915ec3af0cf381ec50ff21ee645af1e67de72f542edb02d9eea1064c",
+    urls = [
+        "https://virt-lint.k8r.cz/virt-lint-0.0.1-1.el9.x86_64.rpm",
+    ],
+)
+
+rpm(
+    name = "virt-lint-devel-0__0.0.1-1.el9.x86_64",
+    sha256 = "5d05c38c23774141923be117c92267c2163685df2f6e48ee37ad8ecf31cb3ebb",
+    urls = [
+        "https://virt-lint.k8r.cz/virt-lint-devel-0.0.1-1.el9.x86_64.rpm",
+    ],
+)
+
+rpm(
+    name = "virt-lint-validators-python-0__0.0.1-1.el9.x86_64",
+    sha256 = "3155b4d404903e24372ef939b47a4260630d6b5cb6210d83095cb123b947fa71",
+    urls = [
+        "https://virt-lint.k8r.cz/virt-lint-validators-python-0.0.1-1.el9.x86_64.rpm",
+    ],
+)
+
+rpm(
     name = "virtiofsd-0__1.11.1-1.el9.aarch64",
     sha256 = "0ba3ac4fee86f207f25ed0c5223be3cd7e88af6d97cb6c4904d35b1f240a6861",
     urls = [
