@@ -266,7 +266,7 @@ var _ = Describe("LibvirtHelper", func() {
 		mockHookManager.EXPECT().OnDefineDomain(wantedSpec, vmi).Return(string(mutatedSpecXml), nil)
 		mockConn.EXPECT().DomainDefineXML(string(mutatedSpecXml)).Return(mockDomain, nil)
 
-		_, err = SetDomainSpecStrWithHooks(mockConn, vmi, wantedSpec)
+		_, err = SetDomainSpecStrWithHooks(nil, mockConn, vmi, wantedSpec)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(wantedSpec.Devices.Disks).To(Equal(mutatedSpec.Devices.Disks))

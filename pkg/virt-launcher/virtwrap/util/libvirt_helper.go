@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	VirtLint "gitlab.com/MichalPrivoznik/virt-lint/go/virt-lint"
 	"kubevirt.io/kubevirt/pkg/virt-controller/services"
 
 	"golang.org/x/sys/unix"
@@ -94,6 +95,12 @@ var PausedReasonTranslationMap = map[libvirt.DomainPausedReason]api.StateChangeR
 
 var getHookManager = hooks.GetManager
 
+type VirtLintEvent struct {
+	Severity string
+	Reason   string
+	Message  string
+}
+
 type LibvirtWrapper struct {
 	user uint32
 }
@@ -128,9 +135,58 @@ func ConvReason(status libvirt.DomainState, reason int) api.StateChangeReason {
 	}
 }
 
+func doBunchOfVirtLintStuffs(lv_conn *libvirt.Connect, vmi *v1.VirtualMachineInstance, xml string, vl_ch chan VirtLintEvent) error {
+	version := VirtLint.Virt_lint_version()
+	micro := version % 1000
+	minor := version / 1000 % 1000
+	major := version / 1000000
+
+	log.Log.Object(vmi).Infof("Using virt-lint version %d.%d.%d", major, minor, micro)
+
+	vl_ch <- VirtLintEvent{"Normal", "Starting", fmt.Sprintf("Using virt-lint version %v.%v.%v", major, minor, micro)}
+
+	vl, err := VirtLint.New(lv_conn)
+	if err != nil {
+		return err
+	}
+	defer vl.Close()
+
+	tags, err := VirtLint.List_validator_tags()
+	if err != nil {
+		return err
+	}
+
+	log.Log.Object(vmi).Infof("Tags supported by virt-lint %s", strings.Join(tags, ", "))
+
+	err = vl.Validate(xml, []string{"kubevirt", "common_p"}, lv_conn != nil)
+	if err != nil {
+		return err
+	}
+
+	warnings, err := vl.GetWarnings()
+	if err != nil {
+		return err
+	}
+
+	for _, warn := range warnings {
+		severity := warn.Level.String()
+		reason := strings.Join(warn.Tags, ", ")
+		message := warn.Msg
+		vl_ch <- VirtLintEvent{severity, reason, message}
+	}
+
+	return nil
+}
+
 // base64.StdEncoding.EncodeToString
-func SetDomainSpecStr(virConn cli.Connection, vmi *v1.VirtualMachineInstance, wantedSpec string) (cli.VirDomain, error) {
+func SetDomainSpecStr(lv_conn *libvirt.Connect, virConn cli.Connection, vmi *v1.VirtualMachineInstance, wantedSpec string, vl chan VirtLintEvent) (cli.VirDomain, error) {
 	log.Log.Object(vmi).V(2).Infof("Domain XML generated. Base64 dump %s", base64.StdEncoding.EncodeToString([]byte(wantedSpec)))
+
+	if err := doBunchOfVirtLintStuffs(lv_conn, vmi, wantedSpec, vl); err != nil {
+		log.Log.Object(vmi).Reason(err).Error("Major issue found by virt-lint validators.")
+		return nil, err
+	}
+
 	dom, err := virConn.DomainDefineXML(wantedSpec)
 	if err != nil {
 		log.Log.Object(vmi).Reason(err).Error("Defining the VirtualMachineInstance failed.")
@@ -139,7 +195,7 @@ func SetDomainSpecStr(virConn cli.Connection, vmi *v1.VirtualMachineInstance, wa
 	return dom, nil
 }
 
-func SetDomainSpecStrWithHooks(virConn cli.Connection, vmi *v1.VirtualMachineInstance, wantedSpec *api.DomainSpec) (cli.VirDomain, error) {
+func SetDomainSpecStrWithHooks(lv_conn *libvirt.Connect, virConn cli.Connection, vmi *v1.VirtualMachineInstance, wantedSpec *api.DomainSpec, vl chan VirtLintEvent) (cli.VirDomain, error) {
 	hooksManager := getHookManager()
 	domainSpec, err := hooksManager.OnDefineDomain(wantedSpec, vmi)
 	if err != nil {
@@ -153,7 +209,7 @@ func SetDomainSpecStrWithHooks(virConn cli.Connection, vmi *v1.VirtualMachineIns
 	}
 	domainSpecObj.DeepCopyInto(wantedSpec)
 
-	return SetDomainSpecStr(virConn, vmi, domainSpec)
+	return SetDomainSpecStr(lv_conn, virConn, vmi, domainSpec, vl)
 }
 
 // GetDomainSpecWithRuntimeInfo return the active domain XML with runtime information embedded
