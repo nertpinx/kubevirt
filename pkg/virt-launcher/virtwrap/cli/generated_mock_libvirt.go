@@ -32,6 +32,10 @@ func (_m *MockConnection) EXPECT() *_MockConnectionRecorder {
 	return _m.recorder
 }
 
+func (_m *MockConnection) GetLibvirtConnect() *libvirt.Connect {
+	return nil
+}
+
 func (_m *MockConnection) LookupDomainByName(name string) (VirDomain, error) {
 	ret := _m.ctrl.Call(_m, "LookupDomainByName", name)
 	ret0, _ := ret[0].(VirDomain)

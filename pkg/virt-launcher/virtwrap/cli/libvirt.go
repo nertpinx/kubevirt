@@ -66,6 +66,8 @@ type Connection interface {
 	GetDomainStats(statsTypes libvirt.DomainStatsTypes, l *stats.DomainJobInfo, flags libvirt.ConnectGetAllDomainStatsFlags) ([]*stats.DomainStats, error)
 	GetQemuVersion() (string, error)
 	GetSEVInfo() (*api.SEVNodeParameters, error)
+
+	GetLibvirtConnect() *libvirt.Connect
 }
 
 type Stream interface {
@@ -118,6 +120,10 @@ func (s *VirStream) Close() error {
 
 func (s *VirStream) UnderlyingStream() *libvirt.Stream {
 	return s.Stream
+}
+
+func (l *LibvirtConnection) GetLibvirtConnect() *libvirt.Connect {
+	return l.Connect
 }
 
 func (l *LibvirtConnection) SetReconnectChan(reconnect chan bool) {
