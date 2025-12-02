@@ -69,6 +69,45 @@ bazeldnf(
     rulename = "libvirt-libs_s390x",
 )
 
+bazeldnf(
+    name = "ldd_lint_x86_64",
+    command = "ldd",
+    libs = [
+        "/usr/lib64/libvirt_lint.so.0.0.1",
+        "/usr/lib64/libjson-c.so.5",
+        "/usr/lib64/libjson-c.so.5.0.0",
+        "/usr/lib64/libpython3.9.so.1.0",
+    ],
+    rpmtree = ":virt-lint-devel_x86_64",
+    rulename = "virt-lint-libs_x86_64",
+)
+
+bazeldnf(
+    name = "ldd_lint_aarch64",
+    command = "ldd",
+    libs = [
+        "/usr/lib64/libvirt_lint.so.0.0.1",
+        "/usr/lib64/libjson-c.so.5",
+        "/usr/lib64/libjson-c.so.5.0.0",
+        "/usr/lib64/libpython3.9.so.1.0",
+    ],
+    rpmtree = ":virt-lint-devel_aarch64",
+    rulename = "virt-lint-libs_aarch64",
+)
+
+bazeldnf(
+    name = "ldd_lint_s390x",
+    command = "ldd",
+    libs = [
+        "/usr/lib64/libvirt_lint.so.0.0.1",
+        "/usr/lib64/libjson-c.so.5",
+        "/usr/lib64/libjson-c.so.5.0.0",
+        "/usr/lib64/libpython3.9.so.1.0",
+    ],
+    rpmtree = ":virt-lint-devel_s390x",
+    rulename = "virt-lint-libs_s390x",
+)
+
 tar2files(
     name = "libvirt-libs_aarch64",
     files = {

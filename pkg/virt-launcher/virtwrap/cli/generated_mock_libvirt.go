@@ -247,6 +247,11 @@ func (mr *MockConnectionMockRecorder) GetSEVInfo() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSEVInfo", reflect.TypeOf((*MockConnection)(nil).GetSEVInfo))
 }
 
+// GetLibvirtConnect returns nil for no connection in tests
+func (m *MockConnection) GetLibvirtConnect() *libvirt.Connect {
+	return nil
+}
+
 // ListAllDomains mocks base method.
 func (m *MockConnection) ListAllDomains(flags libvirt.ConnectListAllDomainsFlags) ([]VirDomain, error) {
 	m.ctrl.T.Helper()

@@ -1,0 +1,6 @@
+repositories:
+- arch: x86_64
+  baseurl: https://virt-lint.k8r.cz/
+  name: custom-build
+  gpgcheck: 0
+  repo_gpgcheck: 0

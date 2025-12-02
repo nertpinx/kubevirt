@@ -429,7 +429,21 @@ func main() {
 	metadataCache := metadata.NewCache()
 
 	signalStopChan := make(chan struct{})
-	domainManager, err := virtwrap.NewLibvirtDomainManager(domainConn, *virtShareDir, *ephemeralDiskDir, &agentStore, *ovmfPath, ephemeralDiskCreator, metadataCache, signalStopChan, *diskMemoryLimitBytes, util.GetPodCPUSet, *imageVolumeEnabled)
+	virtLintChannel := make(chan util.VirtLintEvent)
+	defer close(virtLintChannel)
+
+	// This might be done in startDomainEventMonitoring instead, this is
+	// just to try out whether it works, true PoC style.
+	go func() {
+		for msg := range virtLintChannel {
+			err := notifier.SendK8sEvent(vmi, msg.Severity, msg.Reason, msg.Message)
+			if err != nil {
+				log.Log.Object(vmi).Reason(err).Warning("Error sending k8s event")
+			}
+		}
+	}()
+
+	domainManager, err := virtwrap.NewLibvirtDomainManager(domainConn, *virtShareDir, *ephemeralDiskDir, &agentStore, *ovmfPath, ephemeralDiskCreator, metadataCache, signalStopChan, *diskMemoryLimitBytes, util.GetPodCPUSet, *imageVolumeEnabled, virtLintChannel)
 	if err != nil {
 		panic(err)
 	}

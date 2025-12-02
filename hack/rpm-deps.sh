@@ -7,7 +7,8 @@ source hack/bootstrap.sh
 source hack/config.sh
 
 LIBVIRT_VERSION=${LIBVIRT_VERSION:-0:10.10.0-13.el9}
-QEMU_VERSION=${QEMU_VERSION:-17:9.1.0-20.el9}
+VIRT_LINT_VERSION=${VIRT_LINT_VERSION:-0:0.0.1-1.el9}
+QEMU_VERSION=${QEMU_VERSION:-17:10.1.0-4.el9}
 SEABIOS_VERSION=${SEABIOS_VERSION:-0:1.16.3-4.el9}
 EDK2_VERSION=${EDK2_VERSION:-0:20241117-3.el9}
 LIBGUESTFS_VERSION=${LIBGUESTFS_VERSION:-1:1.54.0-9.el9}
@@ -75,6 +76,12 @@ libvirtdevel_extra="
   lz4-libs
 "
 
+virtlintdevel_main="
+  virt-lint-devel-${VIRT_LINT_VERSION}
+"
+virtlintdevel_extra="
+"
+
 # TODO: Remove the sssd-client and use a better sssd config
 # This requires a way to inject files into the sandbox via bazeldnf
 sandboxroot_main="
@@ -93,6 +100,8 @@ launcherbase_main="
   qemu-kvm-core-${QEMU_VERSION}
   qemu-kvm-device-usb-host-${QEMU_VERSION}
   swtpm-tools-${SWTPM_VERSION}
+  virt-lint-${VIRT_LINT_VERSION}
+  virt-lint-validators-python-${VIRT_LINT_VERSION}
 "
 launcherbase_x86_64="
   edk2-ovmf-${EDK2_VERSION}
@@ -206,6 +215,18 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "x86_64" ]; then
         --config=${ARCHITECTURE} \
         //:bazeldnf -- rpmtree \
         --public --nobest \
+        --name virt-lint-devel_x86_64 \
+        --basesystem ${BASESYSTEM} \
+        ${bazeldnf_repos} \
+        $centos_main \
+        $centos_extra \
+        $virtlintdevel_main \
+        $virtlintdevel_extra
+
+    bazel run \
+        --config=${ARCHITECTURE} \
+        //:bazeldnf -- rpmtree \
+        --public --nobest \
         --name sandboxroot_x86_64 \
         --basesystem ${BASESYSTEM} \
         ${bazeldnf_repos} \
@@ -220,7 +241,6 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "x86_64" ]; then
         --name launcherbase_x86_64 \
         --basesystem ${BASESYSTEM} \
         --force-ignore-with-dependencies '^mozjs60' \
-        --force-ignore-with-dependencies 'python' \
         ${bazeldnf_repos} \
         $centos_main \
         $centos_extra \
@@ -313,6 +333,10 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "x86_64" ]; then
         --config=${ARCHITECTURE} \
         //rpm:ldd_x86_64
 
+    bazel run \
+        --config=${ARCHITECTURE} \
+        //rpm:ldd_lint_x86_64
+
     # regenerate sandboxes
     rm ${SANDBOX_DIR} -rf
     kubevirt::bootstrap::regenerate x86_64
@@ -347,6 +371,18 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "aarch64" ]; then
         --config=${ARCHITECTURE} \
         //:bazeldnf -- rpmtree \
         --public --nobest \
+        --name virt-lint-devel_aarch64 --arch aarch64 \
+        --basesystem ${BASESYSTEM} \
+        ${bazeldnf_repos} \
+        $centos_main \
+        $centos_extra \
+        $virtlintdevel_main \
+        $virtlintdevel_extra
+
+    bazel run \
+        --config=${ARCHITECTURE} \
+        //:bazeldnf -- rpmtree \
+        --public --nobest \
         --name sandboxroot_aarch64 --arch aarch64 \
         --basesystem ${BASESYSTEM} \
         ${bazeldnf_repos} \
@@ -370,7 +406,6 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "aarch64" ]; then
         --name launcherbase_aarch64 --arch aarch64 \
         --basesystem ${BASESYSTEM} \
         --force-ignore-with-dependencies '^mozjs60' \
-        --force-ignore-with-dependencies 'python' \
         ${bazeldnf_repos} \
         $centos_main \
         $centos_extra \
@@ -436,6 +471,10 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "aarch64" ]; then
         --config=${ARCHITECTURE} \
         //rpm:ldd_aarch64
 
+    bazel run \
+        --config=${ARCHITECTURE} \
+        //rpm:ldd_lint_aarch64
+
     # regenerate sandboxes
     rm ${SANDBOX_DIR} -rf
     kubevirt::bootstrap::regenerate aarch64
@@ -470,6 +509,18 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "s390x" ]; then
         --config=${ARCHITECTURE} \
         //:bazeldnf -- rpmtree \
         --public --nobest \
+        --name virt-lint-devel_s390x --arch s390x \
+        --basesystem ${BASESYSTEM} \
+        ${bazeldnf_repos} \
+        $centos_main \
+        $centos_extra \
+        $virtlintdevel_main \
+        $virtlintdevel_extra
+
+    bazel run \
+        --config=${ARCHITECTURE} \
+        //:bazeldnf -- rpmtree \
+        --public --nobest \
         --name sandboxroot_s390x --arch s390x \
         --basesystem ${BASESYSTEM} \
         ${bazeldnf_repos} \
@@ -484,7 +535,6 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "s390x" ]; then
         --name launcherbase_s390x --arch s390x \
         --basesystem ${BASESYSTEM} \
         --force-ignore-with-dependencies '^mozjs60' \
-        --force-ignore-with-dependencies 'python' \
         ${bazeldnf_repos} \
         $centos_main \
         $centos_extra \
@@ -565,6 +615,10 @@ if [ -z "${SINGLE_ARCH}" ] || [ "${SINGLE_ARCH}" == "s390x" ]; then
     bazel run \
         --config=${ARCHITECTURE} \
         //rpm:ldd_s390x
+
+    bazel run \
+        --config=${ARCHITECTURE} \
+        //rpm:ldd_lint_s390x
 
     # regenerate sandboxes
     rm ${SANDBOX_DIR} -rf
